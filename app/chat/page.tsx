@@ -16,14 +16,7 @@ export default function ChatPage() {
     const [replyTo, setReplyTo] = useState<string>('');
     const [ticker, setTicker] = useState("You're not alone! 💜");
     const chatRef = useRef<HTMLDivElement>(null);
-    const [sessionId] = useState(() => {
-        let id = localStorage.getItem('mindbloom-chat-session');
-        if (!id) {
-            id = uuidv4();
-            localStorage.setItem('mindbloom-chat-session', id || '');
-        }
-        return id;
-    });
+    const [sessionId, setSessionId] = useState<string | null>(null);
     const myId = user?.uid || sessionId;
 
     useEffect(() => {
@@ -41,7 +34,6 @@ export default function ChatPage() {
         }
     }, [messages]);
 
-    // Ticker: rotate positive messages
     useEffect(() => {
         const tickers = [
             "You're not alone! 💜",
@@ -57,8 +49,17 @@ export default function ChatPage() {
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        let id = localStorage.getItem('mindbloom-chat-session');
+        if (!id) {
+            id = uuidv4();
+            localStorage.setItem('mindbloom-chat-session', id || '');
+        }
+        setSessionId(id);
+    }, []);
+
     const sendMessage = async () => {
-        if (!input.trim()) return;
+        if (!input.trim() || !myId) return;
         const filter = new Filter();
         const filtered = filter.clean(input.trim());
         await addDoc(collection(db, 'publicChat'), {
